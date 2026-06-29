@@ -1,5 +1,7 @@
 # Deep Learning for Microfluidic Droplet Characterization via Semi-Automatic Annotation
 
+[![DOI](https://zenodo.org/badge/1284413061.svg)](https://doi.org/10.5281/zenodo.21049183)
+
 Automated pipeline for **detection, tracking, counting, and sizing** of microfluidic droplets in video microscopy. A semi-automatic annotation stage based on OpenCV template matching generates a YOLO-format dataset, which is used to train a YOLOv8n model. At inference time, ByteTrack associates detections across frames while a virtual counting line and a pixel-to-µm calibration yield per-droplet diameter measurements and production-rate statistics.
 
 ---
@@ -166,4 +168,18 @@ Core dependencies: `ultralytics`, `supervision`, `opencv-python`, `numpy`, `matp
 
 If you use this pipeline in your work, please cite:
 
-> Maranho, J. G. *et al.* "Automated Characterization of Microfluidic Droplets via Semi-Automatic Annotation and Deep Learning." *CBEB 2026*.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21049182.svg)](https://doi.org/10.5281/zenodo.21049183)
+
+```bibtex
+@software{maranho2026code,
+  author    = {Maranho, J{\'u}lio Gallinaro and {Silva Jr.}, Jo{\~a}o Lameu},
+  title     = {{Juliogallinaro/Droplet-Semi-Automatic-Annotation: v1.0.0 - Initial release}},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {v1.0.0},
+  doi       = {10.5281/zenodo.21049183},
+  url       = {https://doi.org/10.5281/zenodo.21049183}
+}
+}
+```
+
