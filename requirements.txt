@@ -1,0 +1,9 @@
+opencv-python==4.13.0.92
+numpy==2.4.4
+PyYAML==6.0.3
+ipywidgets==8.1.8
+matplotlib==3.10.8
+ipython==9.12.0
+supervision==0.25.0
+ultralytics==8.4.60
+pandas==3.0.2
