@@ -59,6 +59,14 @@ class DatasetSplitResult:
     debug_samples: int
 
 
+@dataclass
+class MergeResult:
+    copied: int
+    conflicts: int
+    train_images: int
+    val_images: int
+
+
 def select_template(video_path: str, template_frame: int, scale: int) -> tuple[np.ndarray, int]:
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -304,7 +312,7 @@ def write_dataset(config: PipelineConfig, state: ExtractionState) -> DatasetSpli
         shutil.rmtree(state.tmp_dir)
 
     yaml_content = {
-        "path": str(state.out_dir.resolve()),
+        "path": "/dataset",
         "train": "images/train",
         "val": "images/val",
         "nc": 1,
@@ -363,10 +371,10 @@ def dataset_summary(config: PipelineConfig, out_dir: Path) -> str:
         "",
         "To train with YOLOv8 (recommended):",
         "  pip install ultralytics",
-        f"  yolo train model=yolov8n.pt data={out_dir}/dataset.yaml epochs=50 imgsz=640",
+        f"  yolo train model=yolov8n.pt data={out_dir}/dataset.yaml epochs=100 imgsz=640",
         "",
         "To train with YOLOv5:",
-        f"  python train.py --data {out_dir}/dataset.yaml --weights yolov5s.pt --epochs 50",
+        f"  python train.py --data {out_dir}/dataset.yaml --weights yolov5s.pt --epochs 100",
     ]
     return "\n".join(lines)
 
@@ -396,3 +404,73 @@ def make_cvat_zip(out_dir: Path, split: str, class_name: str, zip_path: Path) ->
             zip_file.writestr(f"{folder}/{stem}.txt", content)
 
     return len(pairs)
+
+
+def merge_datasets(dataset_dirs: list[str], output_dir: str) -> MergeResult:
+    out = Path(output_dir)
+    for split in ("train", "val"):
+        (out / "images" / split).mkdir(parents=True, exist_ok=True)
+        (out / "labels" / split).mkdir(parents=True, exist_ok=True)
+
+    copied = 0
+    conflicts = 0
+
+    for run_dir in dataset_dirs:
+        run = Path(run_dir)
+        if not run.exists():
+            print(f"Dataset folder not found: {run_dir}")
+            continue
+
+        prefix = run.name
+        for split in ("train", "val"):
+            for img in sorted((run / "images" / split).glob("*.jpg")):
+                lbl = run / "labels" / split / f"{img.stem}.txt"
+
+                dst_img = out / "images" / split / img.name
+                dst_lbl = out / "labels" / split / f"{img.stem}.txt"
+
+                if dst_img.exists():
+                    dst_img = out / "images" / split / f"{prefix}_{img.name}"
+                    dst_lbl = out / "labels" / split / f"{prefix}_{img.stem}.txt"
+                    conflicts += 1
+
+                shutil.copy2(img, dst_img)
+                if lbl.exists():
+                    shutil.copy2(lbl, dst_lbl)
+                else:
+                    dst_lbl.write_text("")
+                copied += 1
+
+    train_images = len(list((out / "images" / "train").glob("*.jpg")))
+    val_images = len(list((out / "images" / "val").glob("*.jpg")))
+
+    return MergeResult(
+        copied=copied,
+        conflicts=conflicts,
+        train_images=train_images,
+        val_images=val_images,
+    )
+
+
+def write_dataset_yaml(out_dir: str, class_name: str) -> Path:
+    out = Path(out_dir)
+    yaml_content = {
+        "path": "/dataset",
+        "train": "images/train",
+        "val": "images/val",
+        "nc": 1,
+        "names": [class_name],
+    }
+
+    yaml_path = out / "dataset.yaml"
+    with open(yaml_path, "w", encoding="utf-8") as file_obj:
+        yaml.dump(yaml_content, file_obj, default_flow_style=False, allow_unicode=True)
+
+    return yaml_path
+
+
+def export_cvat_archives(out_dir: str, class_name: str) -> tuple[int, int]:
+    base = Path(out_dir)
+    train_count = make_cvat_zip(base, "train", class_name, base / "cvat_train.zip")
+    val_count = make_cvat_zip(base, "val", class_name, base / "cvat_val.zip")
+    return train_count, val_count

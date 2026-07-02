@@ -12,8 +12,9 @@ Automated pipeline for **detection, tracking, counting, and sizing** of microflu
 ```
 .
 ├── dataset_droplets_template.ipynb   # Stage 1 — semi-automatic annotation & dataset creation
-├── droplet_tracking_counting.ipynb   # Stage 2 — inference, tracking, counting & sizing
-├── droplet_annotation/               # Python package: template-matching pipeline
+├── dataset_merge.ipynb               # Merge multiple datasets & export CVAT archives
+├── droplet_tracking_counting.ipynb   # Stage 3 — inference, tracking, counting & sizing
+├── droplet_annotation/               # Python package: annotation utilities
 │   └── pipeline.py
 ├── droplet_tracking/                 # Python package: YOLOv8 + ByteTrack pipeline
 │   └── pipeline.py
@@ -26,22 +27,29 @@ Automated pipeline for **detection, tracking, counting, and sizing** of microflu
 ## Workflow overview
 
 ```
-Video (.avi)
+Video (.avi, .mp4, .mov, .mkv)
     │
     ▼
 [1] Semi-automatic annotation          dataset_droplets_template.ipynb
     └─ User selects one reference droplet
-    └─ matchTemplate scans all frames
+    └─ matchTemplate scans sampled frames
     └─ NMS + train/val split
     └─ YOLO labels + dataset.yaml
     │
     ▼
-[2] Model training                     Docker / ultralytics CLI
+[2] Merge datasets (optional)          dataset_merge.ipynb
+    └─ Merge multiple YOLO datasets
+    └─ Resolve filename conflicts
+    └─ Generate merged dataset.yaml
+    └─ Export CVAT YOLO 1.1 archives
+    │
+    ▼
+[3] Model training                     Docker / ultralytics CLI
     └─ YOLOv8n fine-tuned on dataset
     └─ best.pt saved in runs/
     │
     ▼
-[3] Tracking & characterization        droplet_tracking_counting.ipynb
+[4] Tracking & characterization        droplet_tracking_counting.ipynb
     └─ YOLOv8 detection per frame
     └─ ByteTrack association
     └─ Pixel calibration (scale bar)
@@ -90,11 +98,53 @@ dataset/
 
 ### CVAT export
 
-After writing the dataset, cells 10 generates `cvat_train.zip` and `cvat_val.zip` in YOLO 1.1 format, compatible with CVAT for manual review and correction.
+The pipeline also exports `cvat_train.zip` and `cvat_val.zip` in **YOLO 1.1** format, ready for import into CVAT for manual review and annotation refinement.
+
+---
+## Stage 2 — Dataset Merge and CVAT Export (`dataset_merge.ipynb`)
+
+When multiple videos are annotated independently, this notebook combines the resulting YOLO datasets into a single dataset while preserving the original **train/validation** split.
+
+The merged dataset is fully compatible with **Ultralytics YOLO** and can also be exported as **CVAT YOLO 1.1** archives for manual inspection, correction, or additional annotation.
+
+### What it does
+
+1. Merges images and labels from multiple YOLO datasets.
+2. Automatically resolves filename conflicts by renaming duplicate files.
+3. Preserves the original **train** and **validation** directory structure.
+4. Generates a new `dataset.yaml`.
+5. Exports separate CVAT annotation archives for the training and validation splits.
+
+### Output structure
+
+```text
+dataset_merged/
+├── images/
+│   ├── train/
+│   └── val/
+├── labels/
+│   ├── train/
+│   └── val/
+├── dataset.yaml
+├── cvat_train.zip
+└── cvat_val.zip
+```
+
+### Configuration
+
+| Parameter      | Description                                                   |
+| -------------- | ------------------------------------------------------------- |
+| `DATASET_DIRS` | List of YOLO datasets to merge                                |
+| `OUTPUT_DIR`   | Destination folder for the merged dataset                     |
+| `CLASS_NAME`   | Class name written to `dataset.yaml` and used for CVAT export |
+
+### CVAT export
+
+The pipeline also exports `cvat_train.zip` and `cvat_val.zip` in **YOLO 1.1** format, ready for import into CVAT for manual review and annotation refinement.
 
 ---
 
-## Stage 2 — Model training
+## Stage 3 — Model training
 
 Training is executed inside the official Ultralytics Docker image to ensure a reproducible environment.
 
@@ -121,7 +171,7 @@ docker run --rm --gpus all `
 
 ---
 
-## Stage 3 — Tracking & characterization (`droplet_tracking_counting.ipynb`)
+## Stage 4 — Tracking & characterization (`droplet_tracking_counting.ipynb`)
 
 ### What it does
 
