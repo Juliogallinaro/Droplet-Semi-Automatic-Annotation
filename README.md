@@ -11,10 +11,10 @@ Automated pipeline for **detection, tracking, counting, and sizing** of microflu
 
 ```
 .
-├── dataset_droplets_template.ipynb   # Stage 1 — semi-automatic annotation & dataset creation
-├── dataset_merge.ipynb               # Merge multiple datasets & export CVAT archives
-├── droplet_tracking_counting.ipynb   # Stage 3 — inference, tracking, counting & sizing
-├── droplet_annotation/               # Python package: annotation utilities
+├── dataset_droplets_template.ipynb   # Stage 1 — Semi-automatic annotation & dataset creation
+├── dataset_merge.ipynb               # Stage 2 — Merge multiple datasets & export CVAT archives
+├── droplet_tracking_counting.ipynb   # Stage 3 — Inference, tracking, counting & sizing
+├── droplet_annotation/               # Python package: Annotation utilities
 │   └── pipeline.py
 ├── droplet_tracking/                 # Python package: YOLOv8 + ByteTrack pipeline
 │   └── pipeline.py
