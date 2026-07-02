@@ -173,7 +173,7 @@ If you use this pipeline in your work, please cite:
 ```bibtex
 @software{maranho2026code,
   author    = {Maranho, J{\'u}lio Gallinaro and {Silva Jr.}, Jo{\~a}o Lameu},
-  title     = {{Juliogallinaro/Droplet-Semi-Automatic-Annotation: v1.0.0 - Initial release}},
+  title     = {{Droplet Semi-Automatic Annotation}},
   year      = {2026},
   publisher = {Zenodo},
   version   = {v1.0.0},
