@@ -440,12 +440,12 @@ def print_tracking_summary(
         w_px = x2b - x1b
         h_px = y2b - y1b
         d_px = (w_px + h_px) / 2.0
-        sph = min(w_px, h_px) / max(w_px, h_px) if max(w_px, h_px) > 0 else 0.0
+        aspect_ratio = min(w_px, h_px) / max(w_px, h_px) if max(w_px, h_px) > 0 else 0.0
 
         record["dx_px"] = round(w_px, 2)
         record["dy_px"] = round(h_px, 2)
         record["d_px"] = round(d_px, 2)
-        record["sphericity"] = round(sph, 4)
+        record["aspect_ratio"] = round(aspect_ratio, 4)
 
         if um_per_px:
             record["dx_um"] = round(w_px * um_per_px, 2)
@@ -526,38 +526,35 @@ def print_tracking_summary(
     arr_x = df_line[col_x].to_numpy(dtype=float)
     arr_y = df_line[col_y].to_numpy(dtype=float)
     arr_d = (arr_x + arr_y) / 2.0
-    arr_sph = df_line["sphericity"].to_numpy(dtype=float)
+    arr_aspect = df_line["aspect_ratio"].to_numpy(dtype=float)
 
     print()
-    print(f"  Diameters & sphericity at line crossing  [{unit}]")
-    print(f"  {'frame':>7}  {'id':>5}  {'dx':>8}  {'dy':>8}  {'d_mean':>8}  {'aspect':>7}  {'Psi':>7}")
-    print(f"  {'-' * 7}  {'-' * 5}  {'-' * 8}  {'-' * 8}  {'-' * 8}  {'-' * 7}  {'-' * 7}")
+    print(f"  Diameters & aspect ratio at line crossing  [{unit}]")
+    print(f"  {'frame':>7}  {'id':>5}  {'dx':>8}  {'dy':>8}  {'d_mean':>8}  {'Psi':>7}")
+    print(f"  {'-' * 7}  {'-' * 5}  {'-' * 8}  {'-' * 8}  {'-' * 8}  {'-' * 7}")
     for _, row in df_line.iterrows():
         dx = row[col_x]
         dy = row[col_y]
         d_mean = (dx + dy) / 2.0
-        aspect = dx / dy if dy > 0 else float("nan")
         print(
             f"  {int(row['frame']):>7}  "
             f"#{int(row['track_id']):<4}  "
             f"{dx:>8.1f}  "
             f"{dy:>8.1f}  "
             f"{d_mean:>8.1f}  "
-            f"{aspect:>7.3f}  "
-            f"{row['sphericity']:>7.3f}"
+            f"{row['aspect_ratio']:>7.3f}"
         )
 
     mx, sdx, cvx = stats(arr_x)
     my, sdy, cvy = stats(arr_y)
     md, sdd, cvd = stats(arr_d)
-    ms, sds, cvs = stats(arr_sph)
+    ma, sda, cva = stats(arr_aspect)
 
     print()
     print(f"  {'':14}  {'dx':>8}  {'dy':>8}  {'d_mean':>8}  {'Psi':>7}  [unit: {unit}]")
-    print(f"  {'Mean':14}  {mx:>8.1f}  {my:>8.1f}  {md:>8.1f}  {ms:>7.3f}")
-    print(f"  {'SD':14}  {sdx:>8.1f}  {sdy:>8.1f}  {sdd:>8.1f}  {sds:>7.3f}")
-    print(f"  {'CV (%)':14}  {cvx:>8.1f}  {cvy:>8.1f}  {cvd:>8.1f}  {cvs:>7.1f}")
-    print(f"  {'Aspect dx/dy':14}  {mx / my:>8.3f}")
+    print(f"  {'Mean':14}  {mx:>8.1f}  {my:>8.1f}  {md:>8.1f}  {ma:>7.3f}")
+    print(f"  {'SD':14}  {sdx:>8.1f}  {sdy:>8.1f}  {sdd:>8.1f}  {sda:>7.3f}")
+    print(f"  {'CV (%)':14}  {cvx:>8.1f}  {cvy:>8.1f}  {cvd:>8.1f}  {cva:>7.1f}")
 
     print("=" * 55)
     print(f"\n  Output: {output_path}")
@@ -575,7 +572,7 @@ def build_droplet_dataframe(
         "dx_px",
         "dy_px",
         "d_px",
-        "sphericity",
+        "aspect_ratio",
         "dx_um",
         "dy_um",
         "d_um",
@@ -597,22 +594,22 @@ def build_droplet_dataframe(
             w_px = x2b - x1b
             h_px = y2b - y1b
             d_px = (w_px + h_px) / 2.0
-            sph = min(w_px, h_px) / max(w_px, h_px) if max(w_px, h_px) > 0 else 0.0
+            aspect_ratio = min(w_px, h_px) / max(w_px, h_px) if max(w_px, h_px) > 0 else 0.0
 
             record["dx_px"] = round(w_px, 2)
             record["dy_px"] = round(h_px, 2)
             record["d_px"] = round(d_px, 2)
-            record["sphericity"] = round(sph, 4)
+            record["aspect_ratio"] = round(aspect_ratio, 4)
         else:
             dx_px = raw.get("dx_px")
             dy_px = raw.get("dy_px")
             d_px = raw.get("d_px")
-            sphericity = raw.get("sphericity")
+            aspect_ratio = raw.get("aspect_ratio", raw.get("sphericity"))
 
             record["dx_px"] = dx_px
             record["dy_px"] = dy_px
             record["d_px"] = d_px
-            record["sphericity"] = sphericity
+            record["aspect_ratio"] = aspect_ratio
 
         if um_per_px is not None and pd.notna(record["dx_px"]) and pd.notna(record["dy_px"]):
             record["dx_um"] = round(float(record["dx_px"]) * um_per_px, 2)
