@@ -12,8 +12,9 @@ Automated pipeline for **detection, tracking, counting, and sizing** of microflu
 ```
 .
 ├── dataset_droplets_template.ipynb   # Stage 1 — Semi-automatic annotation & dataset creation
-├── dataset_merge.ipynb               # Stage 2 — Merge multiple datasets & export CVAT archives
+├── merge_and_export.ipynb            # Stage 2 — Merge multiple datasets & export CVAT archives
 ├── droplet_tracking_counting.ipynb   # Stage 3 — Inference, tracking, counting & sizing
+├── batch_tracking.ipynb              # Stage 4 — Batch tracking/counting for all videos in a folder
 ├── droplet_annotation/               # Python package: Annotation utilities
 │   └── pipeline.py
 ├── droplet_tracking/                 # Python package: YOLOv8 + ByteTrack pipeline
@@ -37,7 +38,7 @@ Video (.avi, .mp4, .mov, .mkv)
     └─ YOLO labels + dataset.yaml
     │
     ▼
-[2] Merge datasets (optional)          dataset_merge.ipynb
+[2] Merge datasets (optional)          merge_and_export.ipynb
     └─ Merge multiple YOLO datasets
     └─ Resolve filename conflicts
     └─ Generate merged dataset.yaml
@@ -55,6 +56,14 @@ Video (.avi, .mp4, .mov, .mkv)
     └─ Pixel calibration (scale bar)
     └─ Virtual counting line
     └─ Per-droplet diameter + production rate
+    │
+    ▼
+[5] Batch mode (optional)             batch_tracking.ipynb
+    └─ Configure one model + one input folder
+    └─ Calibrate once (um/px)
+    └─ Define counting line once
+    └─ Process all videos automatically
+    └─ Export batch_summary.csv + all_droplets.csv
 ```
 
 ---
@@ -101,7 +110,7 @@ dataset/
 The pipeline also exports `cvat_train.zip` and `cvat_val.zip` in **YOLO 1.1** format, ready for import into CVAT for manual review and annotation refinement.
 
 ---
-## Stage 2 — Dataset Merge and CVAT Export (`dataset_merge.ipynb`)
+## Stage 2 — Dataset Merge and CVAT Export (`merge_and_export.ipynb`)
 
 When multiple videos are annotated independently, this notebook combines the resulting YOLO datasets into a single dataset while preserving the original **train/validation** split.
 
@@ -200,6 +209,48 @@ docker run --rm --gpus all `
 |---------------|-------------|
 | `*_tracked.avi` | Annotated video with IDs, trails, and counter overlay |
 | `df_line` | DataFrame: timestamp, track ID, diameter (µm), production rate |
+
+---
+
+## Stage 5 — Batch Tracking & Counting (`batch_tracking.ipynb`)
+
+Use this notebook when you want to process **all videos in a folder** using the same calibration and counting line.
+
+### Batch workflow
+
+1. Configure model path, input/output folders, and tracking parameters.
+2. Calibrate once from a reference image/video to get `um_per_px`.
+3. Define the counting line once on a representative frame.
+4. Run batch processing over all compatible videos.
+5. Aggregate results into summary tables and CSV files.
+
+### Main settings
+
+| Parameter | Description |
+|-----------|-------------|
+| `MODEL_PATH` | Path to trained YOLO weights (`best.pt`) |
+| `INPUT_FOLDER` | Folder containing videos to process |
+| `OUTPUT_FOLDER` | Folder where tracked videos and CSVs are saved |
+| `CAL_VIDEO_PATH` | Reference file used for calibration UI |
+| `VIDEO_EXTS` | Accepted input extensions (`.avi`, `.mp4`, `.mov`, `.mkv`) |
+| `NAME_FILTER` | Optional filename substring filter (`""` = process all) |
+| `TrackingConfig(...)` | Detection/ByteTrack/visual style parameters |
+
+### Expected outputs
+
+| File / object | Description |
+|---------------|-------------|
+| `*_tracked.avi` | One annotated output video per processed input |
+| `df_batch` | Per-video batch summary shown in notebook |
+| `df_all_drops` | Combined droplet table across all videos |
+| `batch_summary.csv` | Exported per-video summary |
+| `all_droplets.csv` | Exported merged per-droplet table |
+
+### Notes
+
+- The model is loaded once and reused during the loop.
+- Errors are handled per video so a single failure does not stop the full batch.
+- If no counting line is confirmed, batch execution is interrupted with validation error.
 
 ---
 
