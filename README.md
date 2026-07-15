@@ -279,7 +279,7 @@ If you use this pipeline in your work, please cite:
   publisher = {Zenodo},
   version   = {v1.0.0},
   doi       = {10.5281/zenodo.21049183},
-  url       = {https://doi.org/10.5281/zenodo.21049183}
+  url       = {https://doi.org/10.5281/zenodo.21049182}
 }
 ```
 
